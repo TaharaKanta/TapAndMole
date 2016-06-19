@@ -34,3 +34,124 @@ public class Mole {
     protected int direction; // 上下移動向きの方向
     protected float posX; // 設置位置のX座標
     protected float posY; // 設置位置のY座標
+
+    /**
+     * コンストラクタ
+     *
+     * @param posX
+     * @param posY
+     * @param density
+     */
+    public Mole(float posX, float posY, float density) {
+        this.posX = posX;
+        this.posY = posY;
+        this.density = density;
+        this.status = STATUS_HIDDEN;
+    }
+
+    /**
+     * タップした位置で、モグラがヒットしたかチェックする
+     *
+     * @param hitX
+     * @param hitY
+     * @return TRUE: ヒットした　FALSE: ヒットしていない(既にヒット中を含む)
+     */
+    public boolean checkHit(float hitX, float hitY) {
+        if (this.posX > hitX || hitX > this.posX + MOGURA_TOUCH_WIDTH * density
+                || this.posY > hitY
+                || hitY > this.posY + MOGURA_TOUCH_HEIGHT * density) {
+            // 領域外をタッチされた
+            return false;
+        }
+        if (this.status == STATUS_HIDDEN) {
+            // 穴の中に隠れている
+            return false;
+        }
+        if (this.isHit) {
+            // 既にヒットされている
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * ヒットされた状態にセット
+     */
+    public void setHit() {
+        this.isHit = true;
+    }
+
+    /**
+     * ギャングタイプかチェック
+     *
+     * @return TRUE: ギャング　FALSE: 味方
+     */
+    public boolean checkGang() {
+        if (this.isGang) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 状態を計算する
+     */
+    public void nextFrame() {
+
+        if (this.status == STATUS_HIDDEN) {
+            // モグラが隠れた状態
+
+            if (Math.random() <= MOGURA_DIRECTION_UP_RATE) {
+                this.direction = DIRECTION_UP;
+                this.isHit = false; // 初期化
+                this.status = STATUS_HARF;
+
+                // モグラタイプを設定
+                if (Math.random() * 2 < 1) {
+                    this.isGang = true;
+                } else {
+                    this.isGang = false;
+                }
+            }
+        } else if (this.status == STATUS_HARF) {
+            // モグラが半分の状態
+            if (this.isHit || this.direction == DIRECTION_DOWN) {
+                this.status = STATUS_HIDDEN;
+            } else {
+                this.status = STATUS_FULL;
+            }
+        } else if (this.status == STATUS_FULL) {
+            // モグラが全部表示されている
+            if (this.isHit || Math.random() <= MOGURA_DIRECTION_DOWN_RATE) {
+                this.direction = DIRECTION_DOWN;
+                this.status = STATUS_HARF;
+            }
+        }
+    }
+
+    /**
+     * モグラを描画
+     *
+     * @param Canvas
+     */
+    public void draw(Canvas c) {
+        if (this.isHit) {
+            if (this.isGang) {
+                c.drawBitmap(hitGangImages[this.status], this.posX, this.posY,
+                        null);
+            } else {
+                c.drawBitmap(hitFriendImages[this.status], this.posX,
+                        this.posY, null);
+            }
+        } else {
+            if (this.isGang) {
+                c.drawBitmap(gangImages[this.status], this.posX, this.posY,
+                        null);
+            } else {
+                c.drawBitmap(friendImages[this.status], this.posX, this.posY,
+                        null);
+            }
+        }
+    }
+
+}
